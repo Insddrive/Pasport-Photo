@@ -26,11 +26,11 @@
         }
         .container {
             width: 100%;
-            max-width: 800px;
+            max-width: 900px;
             text-align: center;
         }
         h1 {
-            font-size: 26px;
+            font-size: 28px;
             font-weight: 600;
             margin-bottom: 30px;
             white-space: nowrap;
@@ -51,17 +51,20 @@
             font-weight: 500;
             cursor: pointer;
             transition: 0.2s;
-            margin: 10px 5px;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
         .btn-upload {
             background: #ffffff;
             color: #0d6efd;
             border: 2px dashed #0d6efd;
-            padding: 16px 40px;
+            padding: 20px 50px;
             position: relative;
             overflow: hidden;
-            font-size: 18px;
+            font-size: 20px;
+            margin-top: 50px;
         }
         .btn-upload:hover { background: #f8f9fa; }
         .btn-upload input[type=file] {
@@ -69,41 +72,51 @@
         }
         .btn-primary { background-color: #0d6efd; color: white; }
         .btn-primary:hover { background-color: #0b5ed7; }
-        .btn-success { background-color: #198754; color: white; font-size: 18px; padding: 14px 30px;}
+        .btn-success { background-color: #198754; color: white; font-size: 18px; padding: 14px 30px; margin-top: 15px;}
         .btn-success:hover { background-color: #157347; }
         .btn-secondary { background-color: #6c757d; color: white; padding: 10px 20px; font-size: 15px;}
         .btn-secondary:hover { background-color: #5c636a; }
+        .btn-rotate { background-color: #f8f9fa; color: #212529; border: 1px solid #ced4da; }
+        .btn-rotate:hover { background-color: #e2e6ea; }
+
+        .action-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
 
         /* Layout Options */
         .layout-options {
             display: flex;
             justify-content: center;
-            gap: 12px;
+            gap: 15px;
             margin-bottom: 25px;
             flex-wrap: wrap;
         }
         .btn-layout {
             flex: 1;
-            min-width: 140px;
+            min-width: 150px;
             background: #ffffff;
             border: 1px solid #dee2e6;
             color: #495057;
-            padding: 12px;
+            padding: 15px;
+            font-size: 16px;
         }
         .btn-layout:hover { border-color: #0d6efd; color: #0d6efd; }
         .btn-layout.active { background: #0d6efd; color: white; border-color: #0d6efd; }
 
-        /* Crop Container (Fix for Long Press & Jittering) */
+        /* Crop Container */
         .crop-container {
             width: 100%;
-            max-height: 60vh;
+            height: 60vh;
+            max-height: 500px;
             background-color: #f8f9fa;
-            margin-bottom: 20px;
             border: 1px solid #eaeaea;
             border-radius: 8px;
             overflow: hidden;
             
-            /* ਲੌਂਗ ਪ੍ਰੈਸ ਅਤੇ ਸਕਰੋਲ ਝਟਕੇ ਰੋਕਣ ਲਈ (Fix Long Press & Jitter) */
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
@@ -112,7 +125,7 @@
         img { 
             max-width: 100%; 
             display: block; 
-            pointer-events: none; /* Image Selection ਬੰਦ ਕਰਨ ਲਈ */
+            pointer-events: none;
         }
         
         /* Preview Canvas */
@@ -123,12 +136,25 @@
             max-width: 100%;
             height: auto;
             border-radius: 4px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
         .header-actions {
             display: flex;
             justify-content: flex-start;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .crop-container {
+                height: 500px;
+            }
+            .btn {
+                padding: 14px 28px;
+            }
+            h1 {
+                font-size: 32px;
+            }
         }
     </style>
 </head>
@@ -148,7 +174,14 @@
         <div class="crop-container" id="crop-box">
             <img id="image-to-crop" src="" alt="Crop Image">
         </div>
-        <button id="btn-crop" class="btn btn-primary">Crop Photo</button>
+        
+        <div class="action-group">
+            <button id="btn-rotate" class="btn btn-rotate">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-9.21l-4.25-4.25"/></svg>
+                Rotate Photo
+            </button>
+            <button id="btn-crop" class="btn btn-primary">Crop Photo</button>
+        </div>
     </div>
 
     <div id="step-3" class="step">
@@ -180,6 +213,7 @@
     const step3 = document.getElementById('step-3');
     
     const btnCrop = document.getElementById('btn-crop');
+    const btnRotate = document.getElementById('btn-rotate');
     const btnBack = document.getElementById('btn-back');
     const btnDownload = document.getElementById('btn-download');
     const previewCanvas = document.getElementById('preview-canvas');
@@ -187,9 +221,9 @@
     const ctx = previewCanvas.getContext('2d');
     
     let cropper;
+    let savedCropCanvas = null; 
     const pxPerCm = 300 / 2.54; 
 
-    // ਲੌਂਗ ਪ੍ਰੈਸ ਆਪਸ਼ਨ ਬੰਦ ਕਰਨਾ (Disable Right Click / Context Menu)
     cropBoxContainer.addEventListener('contextmenu', function(e) {
         e.preventDefault();
     });
@@ -208,34 +242,47 @@
 
                 cropper = new Cropper(imageToCrop, {
                     aspectRatio: 3.5 / 4.5,  
-                    viewMode: 1, // Smooth scrolling             
-                    dragMode: 'move', // Image drag mode        
+                    viewMode: 1, 
+                    dragMode: 'none',        // FIX: ਫੋਟੋ ਨੂੰ ਹਿਲਾਉਣ (Drag) ਤੋਂ ਰੋਕਣ ਲਈ
+                    zoomable: false,         // FIX: ਜ਼ੂਮ ਇਨ/ਆਊਟ ਬੰਦ ਕਰਨ ਲਈ
+                    movable: false,          // FIX: ਫੋਟੋ ਨੂੰ ਮੂਵ ਹੋਣ ਤੋਂ ਰੋਕਣ ਲਈ
                     minCropBoxWidth: 80,    
                     minCropBoxHeight: 100,   
                     autoCropArea: 0.9,
                     background: false,
-                    toggleDragModeOnDblclick: false // ਝਟਕਾ ਰੋਕਣ ਲਈ
+                    toggleDragModeOnDblclick: false 
                 });
             };
             reader.readAsDataURL(file);
         }
     });
 
+    btnRotate.addEventListener('click', function() {
+        if (cropper) {
+            cropper.rotate(90); 
+        }
+    });
+
     btnCrop.addEventListener('click', function() {
         if (!cropper) return;
+        
+        savedCropCanvas = cropper.getCroppedCanvas({
+            imageSmoothingEnabled: true, 
+            imageSmoothingQuality: 'high'
+        });
+
         step2.classList.remove('active');
         step3.classList.add('active');
     });
 
-    // Back Button Functionality
     btnBack.addEventListener('click', function() {
         step3.classList.remove('active');
         step2.classList.add('active');
         
-        // Reset selections
         layoutBtns.forEach(b => b.classList.remove('active'));
         previewCanvas.style.display = 'none';
         btnDownload.style.display = 'none';
+        savedCropCanvas = null; 
     });
 
     layoutBtns.forEach(btn => {
@@ -245,21 +292,16 @@
             
             const selectedLayout = this.getAttribute('data-layout');
             
-            // Adjust ratio for 10 photos layout slightly if needed
-            if(selectedLayout === '4x6_10') {
-                cropper.setAspectRatio(3.0 / 3.85);
-            } else {
-                cropper.setAspectRatio(3.5 / 4.5);
-            }
-            
             generateSheet(selectedLayout);
         });
     });
 
     function generateSheet(layout) {
+        if (!savedCropCanvas) return;
+
         ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
 
-        // 1. 4x6 (8 Photos)
+        // 1. 4x6_8 Layout
         if (layout === '4x6_8') {
             previewCanvas.width = 1800;  
             previewCanvas.height = 1200; 
@@ -269,19 +311,17 @@
             const gapX = 0.3 * pxPerCm;   const gapY = 0.3 * pxPerCm;
             const startX = 0.17 * pxPerCm; const startY = 0.43 * pxPerCm;
 
-            const croppedCanvas = cropper.getCroppedCanvas({ width: photoW, height: photoH, imageSmoothingEnabled: true, imageSmoothingQuality: 'high' });
-
             for (let r = 0; r < 2; r++) {
                 for (let c = 0; c < 4; c++) {
                     const x = startX + c * (photoW + gapX);
                     const y = startY + r * (photoH + gapY);
-                    ctx.drawImage(croppedCanvas, x, y, photoW, photoH);
+                    ctx.drawImage(savedCropCanvas, x, y, photoW, photoH);
                     ctx.strokeStyle = '#000000'; ctx.lineWidth = 2.5; ctx.strokeRect(x, y, photoW, photoH);
                 }
             }
         }
         
-        // 2. 4x6 (10 Photos)
+        // 2. 4x6_10 Layout
         else if (layout === '4x6_10') {
             previewCanvas.width = Math.round(10.16 * pxPerCm);  
             previewCanvas.height = Math.round(15.24 * pxPerCm); 
@@ -295,12 +335,10 @@
 
             const gapY = 0.3 * pxPerCm; let currentY = 0.32 * pxPerCm;         
 
-            const croppedCanvas = cropper.getCroppedCanvas({ width: pW_vert, height: pH_vert, imageSmoothingEnabled: true, imageSmoothingQuality: 'high' });
-
             for (let r = 0; r < 2; r++) {
                 for (let c = 0; c < 3; c++) {
                     const x = startX_vert + c * (pW_vert + gap_vert);
-                    ctx.drawImage(croppedCanvas, x, currentY, pW_vert, pH_vert);
+                    ctx.drawImage(savedCropCanvas, x, currentY, pW_vert, pH_vert);
                     ctx.strokeStyle = '#000000'; ctx.lineWidth = 2.5; ctx.strokeRect(x, currentY, pW_vert, pH_vert);
                 }
                 currentY += pH_vert + gapY;
@@ -313,7 +351,7 @@
                     ctx.save();
                     ctx.translate(x + pW_horiz / 2, y + pH_horiz / 2);
                     ctx.rotate(90 * Math.PI / 180);
-                    ctx.drawImage(croppedCanvas, -pW_vert / 2, -pH_vert / 2, pW_vert, pH_vert);
+                    ctx.drawImage(savedCropCanvas, -pW_vert / 2, -pH_vert / 2, pW_vert, pH_vert);
                     ctx.restore();
                     ctx.strokeStyle = '#000000'; ctx.lineWidth = 2.5; ctx.strokeRect(x, y, pW_horiz, pH_horiz);
                 }
@@ -321,7 +359,7 @@
             }
         }
 
-        // 3. 8x12 (42 Photos)
+        // 3. 8x12_42 Layout
         else if (layout === '8x12_42') {
             previewCanvas.width = 2400;  
             previewCanvas.height = 3600; 
@@ -331,13 +369,11 @@
             const gapX = 0.4 * pxPerCm;   const gapY = 0.4 * pxPerCm;
             const startX = 0.76 * pxPerCm; const startY = 1.44 * pxPerCm;
 
-            const croppedCanvas = cropper.getCroppedCanvas({ width: photoW, height: photoH, imageSmoothingEnabled: true, imageSmoothingQuality: 'high' });
-
             for (let r = 0; r < 7; r++) {
                 for (let c = 0; c < 6; c++) {
                     const x = startX + c * (photoW + gapX);
                     const y = startY + r * (photoH + gapY);
-                    ctx.drawImage(croppedCanvas, x, y, photoW, photoH);
+                    ctx.drawImage(savedCropCanvas, x, y, photoW, photoH);
                     ctx.strokeStyle = '#000000'; ctx.lineWidth = 2.5; ctx.strokeRect(x, y, photoW, photoH);
                 }
             }
