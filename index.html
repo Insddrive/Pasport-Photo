@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Passport Size Sheet Maker</title>
     
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0d6efd">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     
     <style>
@@ -37,12 +41,10 @@
             color: #111;
         }
         
-        /* Steps Logic */
         .step { display: none; }
         .step.active { display: block; animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Buttons */
         .btn {
             padding: 12px 24px;
             border: none;
@@ -87,7 +89,6 @@
             flex-wrap: wrap;
         }
 
-        /* Layout Options */
         .layout-options {
             display: flex;
             justify-content: center;
@@ -107,7 +108,6 @@
         .btn-layout:hover { border-color: #0d6efd; color: #0d6efd; }
         .btn-layout.active { background: #0d6efd; color: white; border-color: #0d6efd; }
 
-        /* Crop Container */
         .crop-container {
             width: 100%;
             height: 60vh;
@@ -116,19 +116,13 @@
             border: 1px solid #eaeaea;
             border-radius: 8px;
             overflow: hidden;
-            
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
             touch-action: none;
         }
-        img { 
-            max-width: 100%; 
-            display: block; 
-            pointer-events: none;
-        }
+        img { max-width: 100%; display: block; pointer-events: none; }
         
-        /* Preview Canvas */
         #preview-canvas {
             display: none;
             margin: 0 auto 20px auto;
@@ -146,15 +140,9 @@
         }
 
         @media (min-width: 768px) {
-            .crop-container {
-                height: 500px;
-            }
-            .btn {
-                padding: 14px 28px;
-            }
-            h1 {
-                font-size: 32px;
-            }
+            .crop-container { height: 500px; }
+            .btn { padding: 14px 28px; }
+            h1 { font-size: 32px; }
         }
     </style>
 </head>
@@ -204,6 +192,19 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
 <script>
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(registration => {
+                    console.log('Service Worker Registered');
+                })
+                .catch(error => {
+                    console.log('Service Worker Registration failed:', error);
+                });
+        });
+    }
+
     const imageLoader = document.getElementById('image-loader');
     const imageToCrop = document.getElementById('image-to-crop');
     const cropBoxContainer = document.getElementById('crop-box');
@@ -224,9 +225,7 @@
     let savedCropCanvas = null; 
     const pxPerCm = 300 / 2.54; 
 
-    cropBoxContainer.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-    });
+    cropBoxContainer.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
     imageLoader.addEventListener('change', function(e) {
         const file = e.target.files[0];
@@ -243,9 +242,9 @@
                 cropper = new Cropper(imageToCrop, {
                     aspectRatio: 3.5 / 4.5,  
                     viewMode: 1, 
-                    dragMode: 'none',        // FIX: ਫੋਟੋ ਨੂੰ ਹਿਲਾਉਣ (Drag) ਤੋਂ ਰੋਕਣ ਲਈ
-                    zoomable: false,         // FIX: ਜ਼ੂਮ ਇਨ/ਆਊਟ ਬੰਦ ਕਰਨ ਲਈ
-                    movable: false,          // FIX: ਫੋਟੋ ਨੂੰ ਮੂਵ ਹੋਣ ਤੋਂ ਰੋਕਣ ਲਈ
+                    dragMode: 'none',        
+                    zoomable: false,         
+                    movable: false,          
                     minCropBoxWidth: 80,    
                     minCropBoxHeight: 100,   
                     autoCropArea: 0.9,
@@ -258,19 +257,15 @@
     });
 
     btnRotate.addEventListener('click', function() {
-        if (cropper) {
-            cropper.rotate(90); 
-        }
+        if (cropper) cropper.rotate(90); 
     });
 
     btnCrop.addEventListener('click', function() {
         if (!cropper) return;
-        
         savedCropCanvas = cropper.getCroppedCanvas({
             imageSmoothingEnabled: true, 
             imageSmoothingQuality: 'high'
         });
-
         step2.classList.remove('active');
         step3.classList.add('active');
     });
@@ -278,7 +273,6 @@
     btnBack.addEventListener('click', function() {
         step3.classList.remove('active');
         step2.classList.add('active');
-        
         layoutBtns.forEach(b => b.classList.remove('active'));
         previewCanvas.style.display = 'none';
         btnDownload.style.display = 'none';
@@ -289,19 +283,15 @@
         btn.addEventListener('click', function() {
             layoutBtns.forEach(b => b.classList.remove('active'));
             this.classList.add('active');
-            
             const selectedLayout = this.getAttribute('data-layout');
-            
             generateSheet(selectedLayout);
         });
     });
 
     function generateSheet(layout) {
         if (!savedCropCanvas) return;
-
         ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
 
-        // 1. 4x6_8 Layout
         if (layout === '4x6_8') {
             previewCanvas.width = 1800;  
             previewCanvas.height = 1200; 
@@ -320,8 +310,6 @@
                 }
             }
         }
-        
-        // 2. 4x6_10 Layout
         else if (layout === '4x6_10') {
             previewCanvas.width = Math.round(10.16 * pxPerCm);  
             previewCanvas.height = Math.round(15.24 * pxPerCm); 
@@ -329,10 +317,8 @@
 
             const pW_vert = 3.0 * pxPerCm; const pH_vert = 3.85 * pxPerCm;
             const gap_vert = 0.3 * pxPerCm; const startX_vert = 0.28 * pxPerCm;    
-
             const pW_horiz = 3.85 * pxPerCm; const pH_horiz = 3.0 * pxPerCm;
             const gap_horiz = 0.3 * pxPerCm; const startX_horiz = 1.08 * pxPerCm;   
-
             const gapY = 0.3 * pxPerCm; let currentY = 0.32 * pxPerCm;         
 
             for (let r = 0; r < 2; r++) {
@@ -358,8 +344,6 @@
                 currentY += pH_horiz + gapY; 
             }
         }
-
-        // 3. 8x12_42 Layout
         else if (layout === '8x12_42') {
             previewCanvas.width = 2400;  
             previewCanvas.height = 3600; 
