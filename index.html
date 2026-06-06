@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Passport Size Sheet Maker</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 40px 20px;
+            overflow-x: hidden;
+            color: #333;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 26px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            white-space: nowrap;
+            color: #111;
+        }
+        
+        /* Steps Logic */
+        .step { display: none; }
+        .step.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            margin: 10px 5px;
+            display: inline-block;
+        }
+        .btn-upload {
+            background: #ffffff;
+            color: #0d6efd;
+            border: 2px dashed #0d6efd;
+            padding: 16px 40px;
+            position: relative;
+            overflow: hidden;
+            font-size: 18px;
+        }
+        .btn-upload:hover { background: #f8f9fa; }
+        .btn-upload input[type=file] {
+            position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+        }
+        .btn-primary { background-color: #0d6efd; color: white; }
+        .btn-primary:hover { background-color: #0b5ed7; }
+        .btn-success { background-color: #198754; color: white; font-size: 18px; padding: 14px 30px;}
+        .btn-success:hover { background-color: #157347; }
+        .btn-secondary { background-color: #6c757d; color: white; padding: 10px 20px; font-size: 15px;}
+        .btn-secondary:hover { background-color: #5c636a; }
+
+        /* Layout Options */
+        .layout-options {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        .btn-layout {
+            flex: 1;
+            min-width: 140px;
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            color: #495057;
+            padding: 12px;
+        }
+        .btn-layout:hover { border-color: #0d6efd; color: #0d6efd; }
+        .btn-layout.active { background: #0d6efd; color: white; border-color: #0d6efd; }
+
+        /* Crop Container (Fix for Long Press & Jittering) */
+        .crop-container {
+            width: 100%;
+            max-height: 60vh;
+            background-color: #f8f9fa;
+            margin-bottom: 20px;
+            border: 1px solid #eaeaea;
+            border-radius: 8px;
+            overflow: hidden;
+            
+            /* ਲੌਂਗ ਪ੍ਰੈਸ ਅਤੇ ਸਕਰੋਲ ਝਟਕੇ ਰੋਕਣ ਲਈ (Fix Long Press & Jitter) */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: none;
+        }
+        img { 
+            max-width: 100%; 
+            display: block; 
+            pointer-events: none; /* Image Selection ਬੰਦ ਕਰਨ ਲਈ */
+        }
+        
+        /* Preview Canvas */
+        #preview-canvas {
+            display: none;
+            margin: 0 auto 20px auto;
+            border: 1px solid #dee2e6;
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Passport Size Sheet Maker</h1>
+
+    <div id="step-1" class="step active">
+        <div class="btn btn-upload">
+            Upload Photo
+            <input type="file" id="image-loader" accept="image/*">
+        </div>
+    </div>
+
+    <div id="step-2" class="step">
+        <div class="crop-container" id="crop-box">
+            <img id="image-to-crop" src="" alt="Crop Image">
+        </div>
+        <button id="btn-crop" class="btn btn-primary">Crop Photo</button>
+    </div>
+
+    <div id="step-3" class="step">
+        <div class="header-actions">
+            <button id="btn-back" class="btn btn-secondary">← Back</button>
+        </div>
+        
+        <div class="layout-options">
+            <button class="btn btn-layout" data-layout="4x6_8">4x6 (8 Photos)</button>
+            <button class="btn btn-layout" data-layout="4x6_10">4x6 (10 Photos)</button>
+            <button class="btn btn-layout" data-layout="8x12_42">8x12 (42 Photos)</button>
+        </div>
+        
+        <canvas id="preview-canvas"></canvas>
+        <br>
+        <button id="btn-download" class="btn btn-success" style="display:none;">Download Sheet</button>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+<script>
+    const imageLoader = document.getElementById('image-loader');
+    const imageToCrop = document.getElementById('image-to-crop');
+    const cropBoxContainer = document.getElementById('crop-box');
+    
+    const step1 = document.getElementById('step-1');
+    const step2 = document.getElementById('step-2');
+    const step3 = document.getElementById('step-3');
+    
+    const btnCrop = document.getElementById('btn-crop');
+    const btnBack = document.getElementById('btn-back');
+    const btnDownload = document.getElementById('btn-download');
+    const previewCanvas = document.getElementById('preview-canvas');
+    const layoutBtns = document.querySelectorAll('.btn-layout');
+    const ctx = previewCanvas.getContext('2d');
+    
+    let cropper;
+    const pxPerCm = 300 / 2.54; 
+
+    // ਲੌਂਗ ਪ੍ਰੈਸ ਆਪਸ਼ਨ ਬੰਦ ਕਰਨਾ (Disable Right Click / Context Menu)
+    cropBoxContainer.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    });
+
+    imageLoader.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                imageToCrop.src = event.target.result;
+                
+                step1.classList.remove('active');
+                step2.classList.add('active');
+
+                if (cropper) { cropper.destroy(); }
+
+                cropper = new Cropper(imageToCrop, {
+                    aspectRatio: 3.5 / 4.5,  
+                    viewMode: 1, // Smooth scrolling             
+                    dragMode: 'move', // Image drag mode        
+                    minCropBoxWidth: 80,    
+                    minCropBoxHeight: 100,   
+                    autoCropArea: 0.9,
+                    background: false,
+                    toggleDragModeOnDblclick: false // ਝਟਕਾ ਰੋਕਣ ਲਈ
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    btnCrop.addEventListener('click', function() {
+        if (!cropper) return;
+        step2.classList.remove('active');
+        step3.classList.add('active');
+    });
+
+    // Back Button Functionality
+    btnBack.addEventListener('click', function() {
+        step3.classList.remove('active');
+        step2.classList.add('active');
+        
+        // Reset selections
+        layoutBtns.forEach(b => b.classList.remove('active'));
+        previewCanvas.style.display = 'none';
+        btnDownload.style.display = 'none';
+    });
+
+    layoutBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            layoutBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const selectedLayout = this.getAttribute('data-layout');
+            
+            // Adjust ratio for 10 photos layout slightly if needed
+            if(selectedLayout === '4x6_10') {
+                cropper.setAspectRatio(3.0 / 3.85);
+            } else {
+                cropper.setAspectRatio(3.5 / 4.5);
+            }
+            
+            generateSheet(selectedLayout);
+        });
+    });
+
+    function generateSheet(layout) {
+        ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+
+        // 1. 4x6 (8 Photos)
+        if (layout === '4x6_8') {
+            previewCanvas.width = 1800;  
+            previewCanvas.height = 1200; 
+            ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+
+            const photoW = 3.5 * pxPerCm; const photoH = 4.5 * pxPerCm;
+            const gapX = 0.3 * pxPerCm;   const gapY = 0.3 * pxPerCm;
+            const startX = 0.17 * pxPerCm; const startY = 0.43 * pxPerCm;
+
+            const croppedCanvas = cropper.getCroppedCanvas({ width: photoW, height: photoH, imageSmoothingEnabled: true, imageSmoothingQuality: 'high' });
+
+            for (let r = 0; r < 2; r++) {
+                for (let c = 0; c < 4; c++) {
+                    const x = startX + c * (photoW + gapX);
+                    const y = startY + r * (photoH + gapY);
+                    ctx.drawImage(croppedCanvas, x, y, photoW, photoH);
+                    ctx.strokeStyle = '#000000'; ctx.lineWidth = 2.5; ctx.strokeRect(x, y, photoW, photoH);
+                }
+            }
+        }
+        
+        // 2. 4x6 (10 Photos)
+        else if (layout === '4x6_10') {
+            previewCanvas.width = Math.round(10.16 * pxPerCm);  
+            previewCanvas.height = Math.round(15.24 * pxPerCm); 
+            ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+
+            const pW_vert = 3.0 * pxPerCm; const pH_vert = 3.85 * pxPerCm;
+            const gap_vert = 0.3 * pxPerCm; const startX_vert = 0.28 * pxPerCm;    
+
+            const pW_horiz = 3.85 * pxPerCm; const pH_horiz = 3.0 * pxPerCm;
+            const gap_horiz = 0.3 * pxPerCm; const startX_horiz = 1.08 * pxPerCm;   
+
+            const gapY = 0.3 * pxPerCm; let currentY = 0.32 * pxPerCm;         
+
+            const croppedCanvas = cropper.getCroppedCanvas({ width: pW_vert, height: pH_vert, imageSmoothingEnabled: true, imageSmoothingQuality: 'high' });
+
+            for (let r = 0; r < 2; r++) {
+                for (let c = 0; c < 3; c++) {
+                    const x = startX_vert + c * (pW_vert + gap_vert);
+                    ctx.drawImage(croppedCanvas, x, currentY, pW_vert, pH_vert);
+                    ctx.strokeStyle = '#000000'; ctx.lineWidth = 2.5; ctx.strokeRect(x, currentY, pW_vert, pH_vert);
+                }
+                currentY += pH_vert + gapY;
+            }
+
+            for (let r = 0; r < 2; r++) {
+                for (let c = 0; c < 2; c++) {
+                    const x = startX_horiz + c * (pW_horiz + gap_horiz);
+                    const y = currentY;
+                    ctx.save();
+                    ctx.translate(x + pW_horiz / 2, y + pH_horiz / 2);
+                    ctx.rotate(90 * Math.PI / 180);
+                    ctx.drawImage(croppedCanvas, -pW_vert / 2, -pH_vert / 2, pW_vert, pH_vert);
+                    ctx.restore();
+                    ctx.strokeStyle = '#000000'; ctx.lineWidth = 2.5; ctx.strokeRect(x, y, pW_horiz, pH_horiz);
+                }
+                currentY += pH_horiz + gapY; 
+            }
+        }
+
+        // 3. 8x12 (42 Photos)
+        else if (layout === '8x12_42') {
+            previewCanvas.width = 2400;  
+            previewCanvas.height = 3600; 
+            ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+
+            const photoW = 2.8 * pxPerCm; const photoH = 3.6 * pxPerCm;
+            const gapX = 0.4 * pxPerCm;   const gapY = 0.4 * pxPerCm;
+            const startX = 0.76 * pxPerCm; const startY = 1.44 * pxPerCm;
+
+            const croppedCanvas = cropper.getCroppedCanvas({ width: photoW, height: photoH, imageSmoothingEnabled: true, imageSmoothingQuality: 'high' });
+
+            for (let r = 0; r < 7; r++) {
+                for (let c = 0; c < 6; c++) {
+                    const x = startX + c * (photoW + gapX);
+                    const y = startY + r * (photoH + gapY);
+                    ctx.drawImage(croppedCanvas, x, y, photoW, photoH);
+                    ctx.strokeStyle = '#000000'; ctx.lineWidth = 2.5; ctx.strokeRect(x, y, photoW, photoH);
+                }
+            }
+        }
+
+        previewCanvas.style.display = 'block';
+        btnDownload.style.display = 'inline-block';
+    }
+
+    btnDownload.addEventListener('click', function() {
+        const selectedLayout = document.querySelector('.btn-layout.active').getAttribute('data-layout');
+        const link = document.createElement('a');
+        link.download = `Passport_Sheet.png`;
+        link.href = previewCanvas.toDataURL('image/png', 1.0);
+        link.click();
+    });
+</script>
+
+</body>
+</html>
