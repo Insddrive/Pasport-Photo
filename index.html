@@ -12,136 +12,76 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #ffffff;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            padding: 40px 20px;
-            overflow-x: hidden;
-            color: #333;
+            display: flex; justify-content: center; align-items: flex-start;
+            min-height: 100vh; padding: 40px 20px; overflow-x: hidden; color: #333;
         }
-        .container {
-            width: 100%;
-            max-width: 900px;
-            text-align: center;
-        }
-        h1 {
-            font-size: 28px;
-            font-weight: 600;
-            margin-bottom: 30px;
-            white-space: nowrap;
-            color: #111;
-        }
+        .container { width: 100%; max-width: 900px; text-align: center; }
+        h1 { font-size: 28px; font-weight: 600; margin-bottom: 30px; white-space: nowrap; color: #111; }
         
+        /* Steps Logic */
         .step { display: none; }
         .step.active { display: block; animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* Buttons */
         .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: 0.2s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            padding: 12px 24px; border: none; border-radius: 6px; font-size: 16px; font-weight: 500;
+            cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
         }
         .btn-upload {
-            background: #ffffff;
-            color: #0d6efd;
-            border: 2px dashed #0d6efd;
-            padding: 20px 50px;
-            position: relative;
-            overflow: hidden;
-            font-size: 20px;
-            margin-top: 50px;
+            background: #ffffff; color: #0d6efd; border: 2px dashed #0d6efd;
+            padding: 20px 50px; position: relative; overflow: hidden; font-size: 20px; margin-top: 50px;
         }
         .btn-upload:hover { background: #f8f9fa; }
-        .btn-upload input[type=file] {
-            position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
-        }
-        .btn-primary { background-color: #0d6efd; color: white; }
+        .btn-upload input[type=file] { position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+        
+        .btn-primary { background-color: #0d6efd; color: white; margin: 0 5px; }
         .btn-primary:hover { background-color: #0b5ed7; }
-        .btn-success { background-color: #198754; color: white; font-size: 18px; padding: 14px 30px; margin-top: 15px;}
+        .btn-success { background-color: #198754; color: white; font-size: 16px; padding: 12px 24px; margin: 0; }
         .btn-success:hover { background-color: #157347; }
-        .btn-secondary { background-color: #6c757d; color: white; padding: 10px 20px; font-size: 15px;}
+        .btn-secondary { background-color: #6c757d; color: white; padding: 12px 24px; font-size: 16px; margin: 0; }
         .btn-secondary:hover { background-color: #5c636a; }
-        .btn-rotate { background-color: #f8f9fa; color: #212529; border: 1px solid #ced4da; }
+        .btn-rotate { background-color: #f8f9fa; color: #212529; border: 1px solid #ced4da; margin: 0 5px; }
         .btn-rotate:hover { background-color: #e2e6ea; }
+        
+        /* Delete Bucket Button */
+        .btn-delete { 
+            background-color: #ffffff; color: #000000; border: 2px solid #000000; 
+            padding: 10px 24px; margin-top: 15px; border-radius: 8px; width: 100%; max-width: 150px;
+        }
+        .btn-delete:hover { background-color: #f1f1f1; }
 
-        .action-group {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 15px;
-            flex-wrap: wrap;
-        }
+        .action-group { display: flex; justify-content: center; margin-bottom: 15px; flex-wrap: wrap; }
 
-        .layout-options {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 25px;
-            flex-wrap: wrap;
-        }
-        .btn-layout {
-            flex: 1;
-            min-width: 150px;
-            background: #ffffff;
-            border: 1px solid #dee2e6;
-            color: #495057;
-            padding: 15px;
-            font-size: 16px;
-        }
+        /* Layout Options */
+        .layout-options { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }
+        .btn-layout { flex: 1; min-width: 150px; background: #ffffff; border: 1px solid #dee2e6; color: #495057; padding: 15px; font-size: 16px; margin: 0; }
         .btn-layout:hover { border-color: #0d6efd; color: #0d6efd; }
         .btn-layout.active { background: #0d6efd; color: white; border-color: #0d6efd; }
 
+        /* Crop Container */
         .crop-container {
-            width: 100%;
-            height: 60vh;
-            max-height: 500px;
-            background-color: #f8f9fa;
-            border: 1px solid #eaeaea;
-            border-radius: 8px;
-            overflow: hidden;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
-            touch-action: none;
+            width: 100%; height: 60vh; max-height: 500px; background-color: #f8f9fa; border: 1px solid #eaeaea;
+            border-radius: 8px; overflow: hidden;
+            -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: none;
         }
         img { max-width: 100%; display: block; pointer-events: none; }
         
+        /* Preview Canvas */
         #preview-canvas {
-            display: none;
-            margin: 0 auto 20px auto;
-            border: 1px solid #dee2e6;
-            max-width: 100%;
-            height: auto;
-            border-radius: 4px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            display: none; margin: 0 auto 20px auto; border: 1px solid #dee2e6; max-width: 100%; height: auto;
+            border-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
-        .header-actions {
-            display: flex;
-            justify-content: flex-start;
-            margin-bottom: 20px;
-        }
+        /* Header Actions (Back & Download Buttons) */
+        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 
         @media (min-width: 768px) {
             .crop-container { height: 500px; }
-            .btn { padding: 14px 28px; }
             h1 { font-size: 32px; }
         }
     </style>
@@ -159,9 +99,6 @@
     </div>
 
     <div id="step-2" class="step">
-        <div class="crop-container" id="crop-box">
-            <img id="image-to-crop" src="" alt="Crop Image">
-        </div>
         
         <div class="action-group">
             <button id="btn-rotate" class="btn btn-rotate">
@@ -170,11 +107,21 @@
             </button>
             <button id="btn-crop" class="btn btn-primary">Crop Photo</button>
         </div>
+
+        <div class="crop-container" id="crop-box">
+            <img id="image-to-crop" src="" alt="Crop Image">
+        </div>
+        
+        <button id="btn-delete" class="btn btn-delete">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+        </button>
     </div>
 
     <div id="step-3" class="step">
+        
         <div class="header-actions">
             <button id="btn-back" class="btn btn-secondary">← Back</button>
+            <button id="btn-download" class="btn btn-success" style="display:none;">Download Sheet</button>
         </div>
         
         <div class="layout-options">
@@ -184,8 +131,6 @@
         </div>
         
         <canvas id="preview-canvas"></canvas>
-        <br>
-        <button id="btn-download" class="btn btn-success" style="display:none;">Download Sheet</button>
     </div>
 </div>
 
@@ -195,13 +140,7 @@
     // PWA Service Worker Registration
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-                .then(registration => {
-                    console.log('Service Worker Registered');
-                })
-                .catch(error => {
-                    console.log('Service Worker Registration failed:', error);
-                });
+            navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
         });
     }
 
@@ -215,6 +154,7 @@
     
     const btnCrop = document.getElementById('btn-crop');
     const btnRotate = document.getElementById('btn-rotate');
+    const btnDelete = document.getElementById('btn-delete');
     const btnBack = document.getElementById('btn-back');
     const btnDownload = document.getElementById('btn-download');
     const previewCanvas = document.getElementById('preview-canvas');
@@ -225,6 +165,7 @@
     let savedCropCanvas = null; 
     const pxPerCm = 300 / 2.54; 
 
+    // ਲੌਂਗ ਪ੍ਰੈਸ ਆਪਸ਼ਨ ਬੰਦ ਕਰਨਾ
     cropBoxContainer.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
     imageLoader.addEventListener('change', function(e) {
@@ -242,9 +183,8 @@
                 cropper = new Cropper(imageToCrop, {
                     aspectRatio: 3.5 / 4.5,  
                     viewMode: 1, 
-                    dragMode: 'none',        
-                    zoomable: false,         
-                    movable: false,          
+                    dragMode: 'none',        // ਫੋਟੋ ਨੂੰ ਹਿਲਾਉਣ ਤੋਂ ਰੋਕਣ ਲਈ
+                    zoomable: false,         // ਜ਼ੂਮ ਬੰਦ ਕਰਨ ਲਈ
                     minCropBoxWidth: 80,    
                     minCropBoxHeight: 100,   
                     autoCropArea: 0.9,
@@ -256,10 +196,22 @@
         }
     });
 
+    // ਫੋਟੋ ਰੋਟੇਟ ਕਰਨਾ
     btnRotate.addEventListener('click', function() {
-        if (cropper) cropper.rotate(90); 
+        if (cropper) {
+            cropper.rotate(90); 
+        }
     });
 
+    // ਫੋਟੋ ਡਿਲੀਟ ਕਰਨਾ (Delete/Bucket Button)
+    btnDelete.addEventListener('click', function() {
+        if (cropper) cropper.destroy();
+        imageLoader.value = ''; 
+        step2.classList.remove('active');
+        step1.classList.add('active');
+    });
+
+    // ਫੋਟੋ ਕਰੋਪ ਕਰਨਾ
     btnCrop.addEventListener('click', function() {
         if (!cropper) return;
         savedCropCanvas = cropper.getCroppedCanvas({
@@ -270,6 +222,7 @@
         step3.classList.add('active');
     });
 
+    // ਬੈਕ ਬਟਨ (Back Button)
     btnBack.addEventListener('click', function() {
         step3.classList.remove('active');
         step2.classList.add('active');
@@ -279,6 +232,7 @@
         savedCropCanvas = null; 
     });
 
+    // ਸੀਟ ਲੇਆਊਟ ਬਟਨ
     layoutBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             layoutBtns.forEach(b => b.classList.remove('active'));
@@ -288,10 +242,12 @@
         });
     });
 
+    // ਸੀਟ ਤਿਆਰ ਕਰਨ ਦਾ ਫੰਕਸ਼ਨ
     function generateSheet(layout) {
         if (!savedCropCanvas) return;
         ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
 
+        // 1. 4x6 (8 Photos)
         if (layout === '4x6_8') {
             previewCanvas.width = 1800;  
             previewCanvas.height = 1200; 
@@ -310,6 +266,8 @@
                 }
             }
         }
+        
+        // 2. 4x6 (10 Photos)
         else if (layout === '4x6_10') {
             previewCanvas.width = Math.round(10.16 * pxPerCm);  
             previewCanvas.height = Math.round(15.24 * pxPerCm); 
@@ -344,6 +302,8 @@
                 currentY += pH_horiz + gapY; 
             }
         }
+        
+        // 3. 8x12 (42 Photos)
         else if (layout === '8x12_42') {
             previewCanvas.width = 2400;  
             previewCanvas.height = 3600; 
@@ -367,6 +327,7 @@
         btnDownload.style.display = 'inline-block';
     }
 
+    // ਡਾਊਨਲੋਡ ਫੰਕਸ਼ਨ
     btnDownload.addEventListener('click', function() {
         const selectedLayout = document.querySelector('.btn-layout.active').getAttribute('data-layout');
         const link = document.createElement('a');
