@@ -77,7 +77,7 @@
             border-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
-        /* Header Actions (Back & Download Buttons) */
+        /* Header Actions */
         .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 
         @media (min-width: 768px) {
@@ -137,7 +137,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
 <script>
-    // PWA Service Worker Registration
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
@@ -165,7 +164,6 @@
     let savedCropCanvas = null; 
     const pxPerCm = 300 / 2.54; 
 
-    // ਲੌਂਗ ਪ੍ਰੈਸ ਆਪਸ਼ਨ ਬੰਦ ਕਰਨਾ
     cropBoxContainer.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
     imageLoader.addEventListener('change', function(e) {
@@ -180,10 +178,11 @@
 
                 if (cropper) { cropper.destroy(); }
 
+                // FIXED: movable ਹਟਾ ਦਿੱਤਾ ਗਿਆ ਹੈ ਤਾਂ ਜੋ ਰੋਟੇਟ ਕਰਨ 'ਤੇ ਫੋਟੋ ਆਟੋ-ਸੈਂਟਰ ਹੋ ਸਕੇ।
                 cropper = new Cropper(imageToCrop, {
                     aspectRatio: 3.5 / 4.5,  
                     viewMode: 1, 
-                    dragMode: 'none',        // ਫੋਟੋ ਨੂੰ ਹਿਲਾਉਣ ਤੋਂ ਰੋਕਣ ਲਈ
+                    dragMode: 'none',        // ਯੂਜ਼ਰ ਦੀ ਉਂਗਲ ਨਾਲ ਫੋਟੋ ਹਿਲਣ ਤੋਂ ਰੋਕਣ ਲਈ
                     zoomable: false,         // ਜ਼ੂਮ ਬੰਦ ਕਰਨ ਲਈ
                     minCropBoxWidth: 80,    
                     minCropBoxHeight: 100,   
@@ -203,7 +202,7 @@
         }
     });
 
-    // ਫੋਟੋ ਡਿਲੀਟ ਕਰਨਾ (Delete/Bucket Button)
+    // ਫੋਟੋ ਡਿਲੀਟ ਕਰਨਾ
     btnDelete.addEventListener('click', function() {
         if (cropper) cropper.destroy();
         imageLoader.value = ''; 
@@ -222,7 +221,7 @@
         step3.classList.add('active');
     });
 
-    // ਬੈਕ ਬਟਨ (Back Button)
+    // ਬੈਕ ਬਟਨ
     btnBack.addEventListener('click', function() {
         step3.classList.remove('active');
         step2.classList.add('active');
@@ -232,7 +231,6 @@
         savedCropCanvas = null; 
     });
 
-    // ਸੀਟ ਲੇਆਊਟ ਬਟਨ
     layoutBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             layoutBtns.forEach(b => b.classList.remove('active'));
@@ -242,12 +240,10 @@
         });
     });
 
-    // ਸੀਟ ਤਿਆਰ ਕਰਨ ਦਾ ਫੰਕਸ਼ਨ
     function generateSheet(layout) {
         if (!savedCropCanvas) return;
         ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
 
-        // 1. 4x6 (8 Photos)
         if (layout === '4x6_8') {
             previewCanvas.width = 1800;  
             previewCanvas.height = 1200; 
@@ -266,8 +262,6 @@
                 }
             }
         }
-        
-        // 2. 4x6 (10 Photos)
         else if (layout === '4x6_10') {
             previewCanvas.width = Math.round(10.16 * pxPerCm);  
             previewCanvas.height = Math.round(15.24 * pxPerCm); 
@@ -302,8 +296,6 @@
                 currentY += pH_horiz + gapY; 
             }
         }
-        
-        // 3. 8x12 (42 Photos)
         else if (layout === '8x12_42') {
             previewCanvas.width = 2400;  
             previewCanvas.height = 3600; 
