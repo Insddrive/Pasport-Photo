@@ -178,12 +178,12 @@
 
                 if (cropper) { cropper.destroy(); }
 
-                // FIXED: movable ਹਟਾ ਦਿੱਤਾ ਗਿਆ ਹੈ ਤਾਂ ਜੋ ਰੋਟੇਟ ਕਰਨ 'ਤੇ ਫੋਟੋ ਆਟੋ-ਸੈਂਟਰ ਹੋ ਸਕੇ।
                 cropper = new Cropper(imageToCrop, {
                     aspectRatio: 3.5 / 4.5,  
                     viewMode: 1, 
                     dragMode: 'none',        // ਯੂਜ਼ਰ ਦੀ ਉਂਗਲ ਨਾਲ ਫੋਟੋ ਹਿਲਣ ਤੋਂ ਰੋਕਣ ਲਈ
                     zoomable: false,         // ਜ਼ੂਮ ਬੰਦ ਕਰਨ ਲਈ
+                    movable: true,           // FIX: ਐਪ ਨੂੰ ਰੋਟੇਟ ਵੇਲੇ ਫੋਟੋ ਸੈਂਟਰ ਕਰਨ ਦੀ ਇਜਾਜ਼ਤ ਦੇਣ ਲਈ
                     minCropBoxWidth: 80,    
                     minCropBoxHeight: 100,   
                     autoCropArea: 0.9,
@@ -319,7 +319,6 @@
         btnDownload.style.display = 'inline-block';
     }
 
-    // ਡਾਊਨਲੋਡ ਫੰਕਸ਼ਨ
     btnDownload.addEventListener('click', function() {
         const selectedLayout = document.querySelector('.btn-layout.active').getAttribute('data-layout');
         const link = document.createElement('a');
