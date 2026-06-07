@@ -183,7 +183,7 @@
                     viewMode: 1, 
                     dragMode: 'none',        // ਯੂਜ਼ਰ ਦੀ ਉਂਗਲ ਨਾਲ ਫੋਟੋ ਹਿਲਣ ਤੋਂ ਰੋਕਣ ਲਈ
                     zoomable: false,         // ਜ਼ੂਮ ਬੰਦ ਕਰਨ ਲਈ
-                    movable: true,           // FIX: ਐਪ ਨੂੰ ਰੋਟੇਟ ਵੇਲੇ ਫੋਟੋ ਸੈਂਟਰ ਕਰਨ ਦੀ ਇਜਾਜ਼ਤ ਦੇਣ ਲਈ
+                    movable: true,           // ਰੋਟੇਟ ਕਰਨ ਵੇਲੇ ਐਪ ਨੂੰ ਸੈਂਟਰ ਕਰਨ ਦੀ ਇਜਾਜ਼ਤ
                     minCropBoxWidth: 80,    
                     minCropBoxHeight: 100,   
                     autoCropArea: 0.9,
@@ -195,10 +195,25 @@
         }
     });
 
-    // ਫੋਟੋ ਰੋਟੇਟ ਕਰਨਾ
+    // ਫੋਟੋ ਰੋਟੇਟ ਕਰਨਾ (FIXED ISSUE)
     btnRotate.addEventListener('click', function() {
         if (cropper) {
+            // 1. ਕਰੋਪ ਬਾਕਸ ਨੂੰ ਕੁਝ ਦੇਰ ਲਈ ਹਟਾਓ ਤਾਂ ਜੋ ਉਹ ਫੋਟੋ ਨੂੰ ਨਾ ਧੱਕੇ
+            cropper.clear(); 
+            
+            // 2. ਫੋਟੋ ਨੂੰ 90 ਡਿਗਰੀ ਘੁਮਾਓ
             cropper.rotate(90); 
+            
+            // 3. ਫੋਟੋ ਨੂੰ ਜ਼ਬਰਦਸਤੀ ਫਰੇਮ ਦੇ ਬਿਲਕੁਲ ਸੈਂਟਰ ਵਿੱਚ ਸੈੱਟ ਕਰੋ (ਤਾਂ ਜੋ ਗੈਪ ਨਾ ਪਵੇ)
+            const containerData = cropper.getContainerData();
+            const canvasData = cropper.getCanvasData();
+            cropper.setCanvasData({
+                left: (containerData.width - canvasData.width) / 2,
+                top: (containerData.height - canvasData.height) / 2
+            });
+            
+            // 4. ਕਰੋਪ ਬਾਕਸ ਨੂੰ ਵਾਪਸ ਸੈਂਟਰ ਵਿੱਚ ਲਿਆਓ
+            cropper.crop(); 
         }
     });
 
@@ -319,6 +334,7 @@
         btnDownload.style.display = 'inline-block';
     }
 
+    // ਡਾਊਨਲੋਡ ਫੰਕਸ਼ਨ
     btnDownload.addEventListener('click', function() {
         const selectedLayout = document.querySelector('.btn-layout.active').getAttribute('data-layout');
         const link = document.createElement('a');
